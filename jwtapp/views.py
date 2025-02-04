@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework import generics
+from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -8,12 +8,19 @@ from .serializers import LoginSerializer, RegisterSerializer, LoginSerializer, U
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
+from .permissions import HasRole
 
 # Create your views here.
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
+
+class UsersListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, HasRole]
+    required_role = 'admin'
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 
 class LoginView(generics.GenericAPIView):
     serializer_class = LoginSerializer
@@ -36,7 +43,9 @@ class LoginView(generics.GenericAPIView):
 
 
 class DashboardView(APIView):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, HasRole)
+    required_role = 'Student'
+    
     def get(self, request):
         user = request.user
         user_serializer = UserSerializer(user)
